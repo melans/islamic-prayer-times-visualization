@@ -83,6 +83,12 @@ python -m http.server 8000  # Then visit http://localhost:8000
 
 Try these **extreme latitude locations** to see stunning prayer time patterns:
 
+![Prayer Times Patterns](screenshots/anchorage-alaska-prayer-times-pattern.png)
+*Anchorage, Alaska showing dramatic Arctic sine waves*
+
+![Prayer Times Patterns](screenshots/ushuaia-argentina-prayer-times-pattern.png)
+*Ushuaia, Argentina showing gentle Antarctic curves (inverted seasons)*
+
 #### 🏔️ **Anchorage, Alaska** (61°N - Arctic)
 ```
 Search: Anchorage, Alaska, United States
