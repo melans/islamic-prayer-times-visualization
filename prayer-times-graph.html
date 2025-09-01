@@ -223,21 +223,216 @@
         .flex { display: flex; }
         .text-center { text-align: center; }
 
-        /* Responsive adjustments */
+        /* Mobile and Touch Optimizations */
         @media (max-width: 768px) {
+            body {
+                -webkit-text-size-adjust: 100%;
+                -webkit-tap-highlight-color: rgba(93, 173, 226, 0.3);
+            }
+
+            .container {
+                padding: 0;
+                gap: 0;
+            }
+
             .location-info {
                 flex-direction: column;
-                gap: 10px;
+                gap: 12px;
+                padding: 12px;
+                margin: 0;
+                border-radius: 0;
+                position: sticky;
+                top: 0;
+                z-index: 100;
+                backdrop-filter: blur(10px);
+                background-color: rgba(44, 62, 80, 0.95);
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            }
+
+            .control-group {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 8px;
+            }
+
+            #locationSearch {
+                width: calc(100% - 80px) !important;
+                min-width: 200px;
+                max-width: 300px;
+                font-size: 16px; /* Prevents iOS zoom */
+                padding: 8px 12px;
+                margin: 0 !important;
+            }
+
+            #searchBtn {
+                font-size: 14px !important;
+                padding: 8px 16px !important;
+                min-height: 44px; /* iOS touch target */
+                white-space: nowrap;
+            }
+
+            .form-control {
+                font-size: 16px; /* Prevents iOS zoom */
+                min-height: 44px; /* Touch target size */
+            }
+
+            select.form-control {
+                padding: 8px 12px;
+                background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 5"><path fill="%23a8b2c1" d="M2 0L0 2h4zm0 5L0 3h4z"/></svg>');
+                background-repeat: no-repeat;
+                background-position: right 12px center;
+                background-size: 12px;
+                appearance: none;
+                padding-right: 32px;
+            }
+
+            .chart-container {
+                padding: 8px;
+                padding-top: 12px;
+                min-height: calc(100vh - 200px);
             }
 
             .legend-inside {
-                font-size: 0.75em;
+                position: relative;
+                top: 0;
+                left: 0;
+                transform: none;
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
                 gap: 8px;
-                padding: 4px 8px;
+                font-size: 11px;
+                padding: 8px;
+                margin-bottom: 12px;
+                background-color: rgba(38, 56, 73, 0.95);
+                backdrop-filter: blur(5px);
+                border-radius: 8px;
+            }
+
+            .legend-item {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .legend-item span {
+                font-size: 10px;
+                line-height: 1.2;
+            }
+
+            .legend-color {
+                width: 16px;
+                height: 3px;
+                flex-shrink: 0;
             }
 
             h1 {
-                font-size: 1.3em;
+                font-size: 1.2em;
+                margin: 8px 0 4px 0;
+                text-align: center;
+            }
+
+            #locationText {
+                font-size: 14px;
+                text-align: center;
+                word-break: break-word;
+            }
+
+            /* Touch-friendly hover states */
+            .btn:active, .btn:focus {
+                background-color: var(--accent-primary);
+                transform: scale(0.98);
+                transition: all 0.1s ease;
+            }
+
+            /* Improved chart touch interactions */
+            #prayerChart {
+                touch-action: pan-x pan-y;
+                max-height: calc(100vh - 240px);
+            }
+        }
+
+        /* Smaller mobile devices */
+        @media (max-width: 480px) {
+            .location-info {
+                padding: 8px;
+                gap: 10px;
+            }
+
+            #locationSearch {
+                width: 100% !important;
+                margin-bottom: 8px;
+            }
+
+            #searchBtn {
+                width: 100%;
+                margin-bottom: 8px;
+            }
+
+            .control-group {
+                width: 100%;
+            }
+
+            .legend-inside {
+                grid-template-columns: 1fr;
+                gap: 6px;
+                font-size: 10px;
+                padding: 6px;
+            }
+
+            .legend-item span {
+                font-size: 9px;
+            }
+
+            .chart-container {
+                padding: 4px;
+                min-height: calc(100vh - 180px);
+            }
+
+            h1 {
+                font-size: 1.1em;
+            }
+        }
+
+        /* Landscape mobile */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .location-info {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: space-around;
+                padding: 8px;
+                gap: 8px;
+            }
+
+            .control-group {
+                flex-direction: row;
+                align-items: center;
+                gap: 5px;
+            }
+
+            #locationSearch {
+                width: 180px !important;
+            }
+
+            .legend-inside {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 4px;
+                font-size: 9px;
+                padding: 4px;
+                margin-bottom: 8px;
+            }
+
+            .chart-container {
+                min-height: calc(100vh - 120px);
+            }
+        }
+
+        /* High DPI displays */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            .legend-color {
+                border-radius: 1px;
             }
         }
     </style>
@@ -598,7 +793,10 @@
                     data: {
                         datasets: datasets.map(dataset => ({
                             ...dataset,
-                            pointHoverRadius: 4,
+                            pointHoverRadius: window.innerWidth <= 768 ? 6 : 4,
+                            pointRadius: window.innerWidth <= 768 ? 1 : 0,
+                            pointHitRadius: window.innerWidth <= 768 ? 20 : 10,
+                            borderWidth: window.innerWidth <= 768 ? 3 : dataset.borderWidth || 2,
                             tension: 0.1
                         }))
                     },
@@ -607,25 +805,33 @@
                         maintainAspectRatio: false,
                         layout: {
                             padding: {
-                                left: 0,
-                                right: 0,
+                                left: window.innerWidth <= 768 ? 5 : 0,
+                                right: window.innerWidth <= 768 ? 5 : 0,
                                 top: 0,
-                                bottom: 0
+                                bottom: window.innerWidth <= 768 ? 5 : 0
                             }
                         },
                         interaction: {
-                            mode: 'index',
+                            mode: window.innerWidth <= 768 ? 'nearest' : 'index',
                             intersect: false
                         },
                         plugins: {
                             annotation: { annotations },
                             legend: { display: false },
                             tooltip: {
-                                backgroundColor: 'rgba(26, 35, 50, 0.9)',
+                                backgroundColor: 'rgba(26, 35, 50, 0.95)',
                                 titleColor: '#5dade2',
                                 bodyColor: '#e8eaed',
                                 borderColor: '#445a74',
                                 borderWidth: 1,
+                                cornerRadius: 8,
+                                padding: window.innerWidth <= 768 ? 12 : 10,
+                                titleFont: {
+                                    size: window.innerWidth <= 768 ? 14 : 12
+                                },
+                                bodyFont: {
+                                    size: window.innerWidth <= 768 ? 13 : 11
+                                },
                                 filter: (tooltipItem) => tooltipItem.dataset.label !== '',
                                 callbacks: {
                                     label: (context) => {
@@ -669,8 +875,11 @@
                                 },
                                 ticks: {
                                     color: '#a8b2c1',
-                                    maxTicksLimit: 20,
-                                    autoSkip: false
+                                    maxTicksLimit: window.innerWidth <= 768 ? 8 : 20,
+                                    autoSkip: window.innerWidth <= 768,
+                                    font: {
+                                        size: window.innerWidth <= 768 ? 10 : 11
+                                    }
                                 },
                                 grid: {
                                     color: '#445a74',
@@ -688,19 +897,26 @@
                                     display: false
                                 },
                                 ticks: {
-                                    stepSize: 1,
+                                    stepSize: window.innerWidth <= 768 ? 2 : 1,
                                     color: '#a8b2c1',
                                     min: 0,
                                     max: 24,
-                                    count: 25,
+                                    count: window.innerWidth <= 768 ? 13 : 25,
+                                    maxTicksLimit: window.innerWidth <= 768 ? 13 : 25,
                                     callback: function(value) {
                                         return value.toString().padStart(2, '0') + ':00';
                                     },
                                     font: function(context) {
-                                        if (!context.tick || context.tick.value === undefined) return { weight: 'normal' };
+                                        if (!context.tick || context.tick.value === undefined) {
+                                            return { 
+                                                weight: 'normal', 
+                                                size: window.innerWidth <= 768 ? 9 : 11 
+                                            };
+                                        }
                                         const value = context.tick.value;
                                         return {
-                                            weight: (value % 6 === 0) ? 'bold' : 'normal'
+                                            weight: (value % 6 === 0) ? 'bold' : 'normal',
+                                            size: window.innerWidth <= 768 ? 9 : 11
                                         };
                                     }
                                 },
@@ -971,6 +1187,58 @@
 
         // Load data when page loads
         window.addEventListener('load', () => app.loadAllPrayerTimes());
+
+        // Handle orientation changes and resize events for mobile
+        let resizeTimeout;
+        function handleResize() {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                if (app.chart) {
+                    // Update chart configuration for new screen size
+                    const isMobile = window.innerWidth <= 768;
+                    
+                    // Update layout padding
+                    app.chart.options.layout.padding.left = isMobile ? 5 : 0;
+                    app.chart.options.layout.padding.right = isMobile ? 5 : 0;
+                    app.chart.options.layout.padding.bottom = isMobile ? 5 : 0;
+                    
+                    // Update interaction mode
+                    app.chart.options.interaction.mode = isMobile ? 'nearest' : 'index';
+                    
+                    // Update tooltip styling
+                    app.chart.options.plugins.tooltip.padding = isMobile ? 12 : 10;
+                    app.chart.options.plugins.tooltip.titleFont.size = isMobile ? 14 : 12;
+                    app.chart.options.plugins.tooltip.bodyFont.size = isMobile ? 13 : 11;
+                    
+                    // Update axes
+                    app.chart.options.scales.x.ticks.maxTicksLimit = isMobile ? 8 : 20;
+                    app.chart.options.scales.x.ticks.autoSkip = isMobile;
+                    app.chart.options.scales.x.ticks.font.size = isMobile ? 10 : 11;
+                    
+                    app.chart.options.scales.y.ticks.stepSize = isMobile ? 2 : 1;
+                    app.chart.options.scales.y.ticks.count = isMobile ? 13 : 25;
+                    app.chart.options.scales.y.ticks.maxTicksLimit = isMobile ? 13 : 25;
+                    
+                    // Update dataset styling
+                    app.chart.data.datasets.forEach(dataset => {
+                        dataset.pointHoverRadius = isMobile ? 6 : 4;
+                        dataset.pointRadius = isMobile ? 1 : 0;
+                        dataset.pointHitRadius = isMobile ? 20 : 10;
+                        if (dataset.borderWidth && dataset.borderWidth > 0) {
+                            dataset.borderWidth = isMobile ? 3 : 2;
+                        }
+                    });
+                    
+                    app.chart.update('none');
+                    app.chart.resize();
+                }
+            }, 250);
+        }
+
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(handleResize, 500); // Delay for orientation change completion
+        });
     </script>
 </body>
 </html>
