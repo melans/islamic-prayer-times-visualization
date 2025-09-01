@@ -231,6 +231,13 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 - **Islamic scholars** whose work established the prayer time calculation methods
 - **Extreme latitude communities** (Anchorage, Ushuaia, etc.) whose unique geographic positions showcase the mathematical beauty of Islamic prayer time adaptations
 
+### 🤖 Development Partnership
+This project represents a **human-AI collaboration**:
+- **Human Vision:** [@melans](https://github.com/melans) - Project concept, Islamic requirements, user feedback, and community leadership
+- **AI Implementation:** Claude (Anthropic) - Complete technical architecture, development, documentation, and strategic planning
+
+**Together:** Meaningful purpose meets technical excellence, serving the global Muslim community while advancing educational understanding of Islamic astronomy.
+
 ## 📞 Support
 
 - **🌐 Live Demo**: [sites.google.com/view/muslimprayertimesvisualization](https://sites.google.com/view/muslimprayertimesvisualization/) 
