@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muslim Prayer Times - 3 Year Visualization</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.2.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <style>
+        :root {
+            /* Dark Theme Color Palette */
+            --bg-primary: #1a2332;
+            --bg-secondary: #263849;
+            --bg-tertiary: #2c3e50;
+            --text-primary: #e8eaed;
+            --text-secondary: #a8b2c1;
+            --accent-primary: #5dade2;
+            --accent-secondary: #2e7cd6;
+            --border-color: #445a74;
+            --border-thick: #6c8299;
+            --error-color: #e74c3c;
+
+            /* Prayer Colors */
+            --fajr-color: #5dade2;
+            --sunrise-color: #ffffff;
+            --dhuhr-color: #ffdc00;
+            --asr-color: #ff851b;
+            --maghrib-color: #8b008b;
+            --isha-color: #001f3f;
+
+            /* Layout Constants */
+            --header-margin: 10px;
+            --border-radius: 5px;
+            --transition-speed: 0.3s;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Layout Components */
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-container {
+            position: relative;
+            flex: 1;
+            background-color: var(--bg-secondary);
+            padding: 10px;
+            padding-top: 50px;
+            /* Ensure full height for chart */
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Typography */
+        h1 {
+            text-align: center;
+            color: var(--accent-primary);
+            margin: var(--header-margin) 0 5px 0;
+            font-size: 1.5em;
+        }
+
+        /* Controls & Form Elements */
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            background-color: var(--accent-secondary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 5px;
+            transition: background-color var(--transition-speed);
+        }
+
+        .btn:hover {
+            background-color: var(--accent-primary);
+        }
+
+        .btn:disabled {
+            background-color: var(--border-color);
+            cursor: not-allowed;
+        }
+
+        .form-control {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            padding: 2px 5px;
+            font-size: 0.85em;
+            margin-left: 5px;
+        }
+
+        .form-control[type="checkbox"] {
+            accent-color: var(--accent-primary);
+        }
+
+        /* Location Information */
+        .location-info {
+            text-align: center;
+            margin: 5px 10px;
+            padding: 5px;
+            background-color: var(--bg-tertiary);
+            border-radius: 3px;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.85em;
+        }
+
+        /* Legend System */
+        .legend-inside {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            z-index: 10;
+            background-color: rgba(38, 56, 73, 0.9);
+            padding: 6px 12px;
+            border-radius: var(--border-radius);
+            font-size: 0.85em;
+            white-space: nowrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 3px;
+            border-radius: 2px;
+        }
+
+        /* Prayer Color Classes */
+        .color-fajr { background-color: var(--fajr-color); }
+        .color-sunrise { background-color: var(--sunrise-color); }
+        .color-dhuhr { background-color: var(--dhuhr-color); }
+        .color-asr { background-color: var(--asr-color); }
+        .color-maghrib { background-color: var(--maghrib-color); }
+        .color-isha { background-color: var(--isha-color); }
+
+        /* Loading States */
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2em;
+            color: var(--accent-primary);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border-color);
+            border-radius: 50%;
+            border-top-color: var(--accent-primary);
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 20px;
+        }
+
+        .loading-text {
+            margin-top: 10px;
+        }
+
+        .error {
+            text-align: center;
+            padding: 50px;
+            color: var(--error-color);
+            font-size: 1.1em;
+        }
+
+        /* Animations */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Chart Styling */
+        #prayerChart {
+            transition: opacity var(--transition-speed);
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* Utility Classes */
+        .hidden { display: none; }
+        .flex { display: flex; }
+        .text-center { text-align: center; }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .location-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .legend-inside {
+                font-size: 0.75em;
+                gap: 8px;
+                padding: 4px 8px;
+            }
+
+            h1 {
+                font-size: 1.3em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="locationInfo" class="location-info">
+            <span id="locationText">Detecting your location...</span>
+            <div class="control-group">
+                <input type="text" id="locationSearch" class="form-control" placeholder="Search city (e.g., New York, London, Dubai)" style="width: 200px; margin-right: 5px;" onkeypress="handleLocationSearch(event)">
+                <button id="searchBtn" class="btn" onclick="searchLocation()" style="font-size: 0.75em; padding: 4px 8px;">Search</button>
+            </div>
+            <div class="control-group">
+                <input type="checkbox" id="dstToggle" class="form-control" checked onchange="toggleDST()">
+                <label for="dstToggle">Daylight Saving Time</label>
+            </div>
+            <div class="control-group">
+                <label for="yearsSelect">Years:</label>
+                <select id="yearsSelect" class="form-control" onchange="changeYears()">
+                    <option value="1" selected>1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="legend-inside hidden">
+                <div class="legend-item">
+                    <div class="legend-color color-fajr"></div>
+                    <span>Fajr (Dawn Prayer)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color color-sunrise"></div>
+                    <span>Sunrise</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color color-dhuhr"></div>
+                    <span>Dhuhr (Noon Prayer)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color color-asr"></div>
+                    <span>Asr (Afternoon Prayer)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color color-maghrib"></div>
+                    <span>Maghrib (Sunset Prayer)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color color-isha"></div>
+                    <span>Isha (Night Prayer)</span>
+                </div>
+            </div>
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <div class="loading-text">
+                    Loading prayer times data...<br>
+                    <small>This may take a moment as we fetch 5 years of data</small>
+                </div>
+            </div>
+            <canvas id="prayerChart" class="hidden" style="flex: 1; min-height: 0;"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // Application State Management
+        class PrayerTimesApp {
+            constructor() {
+                this.chart = null;
+                this.allData = {};
+                this.rawPrayerData = {};
+                this.currentLocation = null;
+                this.prayerColors = {
+                    fajr: '#5dade2',
+                    sunrise: '#ffffff',
+                    dhuhr: '#ffdc00',
+                    asr: '#ff851b',
+                    maghrib: '#8b008b',
+                    isha: '#001f3f'
+                };
+                this.prayerOrder = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+            }
+
+            // Utility Methods
+            timeToDecimal(timeStr) {
+                const [hours, minutes] = timeStr.split(':').map(Number);
+                return hours + minutes / 60;
+            }
+
+            getElement(id) {
+                return document.getElementById(id);
+            }
+
+            toggleClass(element, className, condition) {
+                element.classList.toggle(className, condition);
+            }
+
+            // Location Services
+            async getUserLocation() {
+                return new Promise((resolve, reject) => {
+                    const defaultLocation = {
+                        latitude: 21.3891,
+                        longitude: 39.8579,
+                        default: true,
+                        name: 'Mecca, Saudi Arabia'
+                    };
+
+                    if (!navigator.geolocation) {
+                        console.log('Geolocation not supported, using Mecca');
+                        resolve(defaultLocation);
+                        return;
+                    }
+
+                    navigator.geolocation.getCurrentPosition(
+                        position => {
+                            resolve({
+                                latitude: position.coords.latitude,
+                                longitude: position.coords.longitude,
+                                name: 'Your Location'
+                            });
+                        },
+                        error => {
+                            console.log('Geolocation error:', error.code, error.message, 'using Mecca');
+                            resolve(defaultLocation);
+                        },
+                        {
+                            enableHighAccuracy: true,
+                            timeout: 5000,
+                            maximumAge: 300000 // 5 minutes
+                        }
+                    );
+                });
+            }
+
+
+            async geocodeCity(cityName) {
+                try {
+                    console.log('Geocoding city:', cityName);
+
+                    // Try Nominatim (OpenStreetMap) geocoding service
+                    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cityName)}&format=json&limit=1`;
+                    console.log('Geocoding URL:', url);
+
+                    const response = await fetch(url, {
+                        headers: {
+                            'User-Agent': 'PrayerTimesApp/1.0'
+                        }
+                    });
+                    const data = await response.json();
+                    console.log('Geocoding response:', data);
+
+                    if (data && data.length > 0) {
+                        const result = {
+                            lat: parseFloat(data[0].lat),
+                            lon: parseFloat(data[0].lon),
+                            display_name: data[0].display_name
+                        };
+                        console.log('Geocoding result:', result);
+                        return result;
+                    }
+                    console.log('No geocoding results found');
+                    return null;
+                } catch (error) {
+                    console.error('Geocoding fetch error:', error);
+                    return null;
+                }
+            }
+
+
+            // DST Calculations
+            isDaylightSavingTime(date) {
+                const year = date.getFullYear();
+
+                // Find second Sunday in March
+                const march = new Date(year, 2, 1);
+                const marchFirstSunday = new Date(year, 2, 1 + (7 - march.getDay()) % 7);
+                const dstStart = new Date(year, 2, marchFirstSunday.getDate() + 7);
+
+                // Find first Sunday in November
+                const november = new Date(year, 10, 1);
+                const dstEnd = new Date(year, 10, 1 + (7 - november.getDay()) % 7);
+
+                return date >= dstStart && date < dstEnd;
+            }
+
+            // API Data Fetching
+            async fetchPrayerTimes(latitude, longitude, year, month, forceRefresh = false) {
+                const cacheKey = `${latitude}-${longitude}-${year}-${month}`;
+
+                if (!forceRefresh && this.rawPrayerData[cacheKey]) {
+                    return this.processPrayerData(this.rawPrayerData[cacheKey]);
+                }
+
+                const url = `https://api.aladhan.com/v1/calendar/${year}/${month}?latitude=${latitude}&longitude=${longitude}&method=2`;
+
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+
+                    if (data.code !== 200 || !data.data) {
+                        console.error('API Error:', data);
+                        return null;
+                    }
+
+                    // Cache the raw data
+                    this.rawPrayerData[cacheKey] = JSON.parse(JSON.stringify(data.data));
+                    return this.processPrayerData(data.data);
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    return null;
+                }
+            }
+
+            processPrayerData(rawData) {
+                const dstEnabled = this.getElement('dstToggle')?.checked ?? true;
+                const processedData = JSON.parse(JSON.stringify(rawData));
+
+                if (!dstEnabled) {
+                    processedData.forEach(day => {
+                        const dateStr = day.date.gregorian.date;
+                        const [dayNum, monthNum, yearNum] = dateStr.split('-').map(Number);
+                        const currentDate = new Date(yearNum, monthNum - 1, dayNum);
+
+                        if (this.isDaylightSavingTime(currentDate)) {
+                            Object.keys(day.timings).forEach(prayerKey => {
+                                const timing = day.timings[prayerKey];
+                                if (timing && timing.includes(':')) {
+                                    const timePart = timing.split(' ')[0];
+                                    const [hours, minutes] = timePart.split(':').map(Number);
+                                    let adjustedHours = hours - 1;
+                                    if (adjustedHours < 0) adjustedHours = 23;
+                                    day.timings[prayerKey] = `${adjustedHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                                }
+                            });
+                        }
+                    });
+                }
+
+                return processedData;
+            }
+
+            // Chart Creation and Management
+            createDatasets(prayerData) {
+                const datasets = [];
+
+                // Top fill (0 to Fajr) - Night time
+                datasets.push({
+                    label: '',
+                    data: prayerData.fajr.map(point => ({ x: point.x, y: 0 })),
+                    borderColor: 'transparent',
+                    backgroundColor: this.prayerColors.isha + 'CC',
+                    borderWidth: 0,
+                    pointRadius: 0,
+                    fill: '+1',
+                    showLine: true,
+                    order: 7
+                });
+
+                // Prayer time datasets with fills
+                const prayerSequence = [
+                    { prayer: 'fajr', fillColor: null },
+                    { prayer: 'sunrise', fillColor: this.prayerColors.fajr + '40' },
+                    { prayer: 'dhuhr', fillColor: this.prayerColors.sunrise + '60' },
+                    { prayer: 'asr', fillColor: this.prayerColors.dhuhr + '80' },
+                    { prayer: 'maghrib', fillColor: this.prayerColors.asr + '80' },
+                    { prayer: 'isha', fillColor: this.prayerColors.maghrib + '90' }
+                ];
+
+                prayerSequence.forEach(({ prayer, fillColor }, index) => {
+                    const capitalizedPrayer = prayer.charAt(0).toUpperCase() + prayer.slice(1);
+
+                    datasets.push({
+                        label: capitalizedPrayer,
+                        data: prayerData[prayer],
+                        borderColor: this.prayerColors[prayer],
+                        backgroundColor: fillColor,
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: index === 0 ? false : '-1',
+                        order: 6 - index
+                    });
+                });
+
+                // Bottom fill (Isha to 24:00) - Night time
+                datasets.push({
+                    label: '',
+                    data: prayerData.isha.map(point => ({ x: point.x, y: 24 })),
+                    borderColor: 'transparent',
+                    backgroundColor: this.prayerColors.isha + 'CC',
+                    borderWidth: 0,
+                    pointRadius: 0,
+                    fill: '-1',
+                    showLine: true,
+                    order: 0
+                });
+
+                return datasets;
+            }
+
+            createChart(datasets) {
+                const ctx = this.getElement('prayerChart').getContext('2d');
+
+                if (this.chart) {
+                    this.chart.destroy();
+                }
+
+                const selectedYears = parseInt(this.getElement('yearsSelect').value) || 1;
+                const currentYear = new Date().getFullYear();
+                const today = new Date();
+                const annotations = {};
+
+                // Year boundary annotations
+                for (let i = 0; i < selectedYears; i++) {
+                    const year = currentYear - i;
+                    const yearStart = new Date(year, 0, 1);
+
+                    annotations[`year${year}`] = {
+                        type: 'line',
+                        scaleID: 'x',
+                        value: yearStart,
+                        borderColor: '#5dade2',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        label: {
+                            display: true,
+                            content: year.toString(),
+                            position: 'start',
+                            backgroundColor: '#2c3e50',
+                            color: '#5dade2',
+                            font: { size: 12, weight: 'bold' }
+                        }
+                    };
+                }
+
+                // Today's date annotation
+                annotations.today = {
+                    type: 'line',
+                    scaleID: 'x',
+                    value: today,
+                    borderColor: '#5dade2',
+                    borderWidth: 2,
+                    label: {
+                        display: true,
+                        content: 'Today',
+                        position: 'start',
+                        backgroundColor: '#2c3e50',
+                        color: '#5dade2',
+                        font: { size: 12, weight: 'bold' }
+                    }
+                };
+
+                // Removed time label from chart annotations - now handled as HTML element
+
+                this.chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        datasets: datasets.map(dataset => ({
+                            ...dataset,
+                            pointHoverRadius: 4,
+                            tension: 0.1
+                        }))
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: {
+                                left: 0,
+                                right: 0,
+                                top: 0,
+                                bottom: 0
+                            }
+                        },
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        plugins: {
+                            annotation: { annotations },
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: 'rgba(26, 35, 50, 0.9)',
+                                titleColor: '#5dade2',
+                                bodyColor: '#e8eaed',
+                                borderColor: '#445a74',
+                                borderWidth: 1,
+                                filter: (tooltipItem) => tooltipItem.dataset.label !== '',
+                                callbacks: {
+                                    label: (context) => {
+                                        const decimalTime = context.parsed.y;
+                                        const hours = Math.floor(decimalTime);
+                                        const minutes = Math.round((decimalTime - hours) * 60);
+
+                                        const finalHours = minutes >= 60 ? hours + 1 : hours;
+                                        const finalMinutes = minutes >= 60 ? 0 : minutes;
+
+                                        const time = `${finalHours.toString().padStart(2, '0')}:${finalMinutes.toString().padStart(2, '0')}`;
+                                        return `${context.dataset.label}: ${time}`;
+                                    },
+                                    labelColor: (context) => {
+                                        const prayerName = context.dataset.label.toLowerCase();
+                                        const color = this.prayerColors[prayerName] || context.dataset.borderColor;
+                                        return {
+                                            borderColor: color,
+                                            backgroundColor: color
+                                        };
+                                    }
+                                },
+                                itemSort: (a, b) => {
+                                    const aIndex = this.prayerOrder.indexOf(a.dataset.label);
+                                    const bIndex = this.prayerOrder.indexOf(b.dataset.label);
+                                    return aIndex - bIndex;
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                type: 'time',
+                                time: {
+                                    unit: 'month',
+                                    displayFormats: {
+                                        month: 'MMM'
+                                    }
+                                },
+                                title: {
+                                    display: false
+                                },
+                                ticks: {
+                                    color: '#a8b2c1',
+                                    maxTicksLimit: 20,
+                                    autoSkip: false
+                                },
+                                grid: {
+                                    color: '#445a74',
+                                    borderColor: '#445a74',
+                                    display: true
+                                },
+                                display: true
+                            },
+                            y: {
+                                display: true,
+                                reverse: true,
+                                min: 0,
+                                max: 24,
+                                title: {
+                                    display: false
+                                },
+                                ticks: {
+                                    stepSize: 1,
+                                    color: '#a8b2c1',
+                                    min: 0,
+                                    max: 24,
+                                    count: 25,
+                                    callback: function(value) {
+                                        return value.toString().padStart(2, '0') + ':00';
+                                    },
+                                    font: function(context) {
+                                        if (!context.tick || context.tick.value === undefined) return { weight: 'normal' };
+                                        const value = context.tick.value;
+                                        return {
+                                            weight: (value % 6 === 0) ? 'bold' : 'normal'
+                                        };
+                                    }
+                                },
+                                grid: {
+                                    color: function(context) {
+                                        if (!context.tick || context.tick.value === undefined) return '#445a74';
+                                        const value = context.tick.value;
+                                        return (value % 6 === 0) ? '#6c8299' : '#445a74';
+                                    },
+                                    lineWidth: function(context) {
+                                        if (!context.tick || context.tick.value === undefined) return 1;
+                                        const value = context.tick.value;
+                                        return (value % 6 === 0) ? 2 : 1;
+                                    },
+                                    borderColor: '#445a74'
+                                }
+                            }
+                        }
+                    }
+                });
+
+                this.showChart();
+            }
+
+            // UI State Management
+            showLoading() {
+                this.getElement('loading').classList.remove('hidden');
+                this.getElement('prayerChart').classList.add('hidden');
+                this.getElement('legend-inside')?.classList.add('hidden');
+            }
+
+            showChart() {
+                this.getElement('loading').classList.add('hidden');
+                this.getElement('prayerChart').classList.remove('hidden');
+                document.querySelector('.legend-inside').classList.remove('hidden');
+            }
+
+            updateLoadingProgress(currentStep, totalSteps, year, month) {
+                const loadingText = document.querySelector('.loading-text');
+                const progress = Math.round((currentStep / totalSteps) * 100);
+                loadingText.innerHTML = `
+                    Loading prayer times data... (${progress}%)<br>
+                    <small>Fetching ${year}-${month.toString().padStart(2, '0')} (${currentStep}/${totalSteps} months)</small>
+                `;
+            }
+
+            // Main Data Loading
+            async loadAllPrayerTimes() {
+                try {
+                    this.showLoading();
+
+                    // Use existing location if already set from search, otherwise get user location
+                    let location;
+                    if (this.currentLocation) {
+                        location = this.currentLocation;
+                        console.log('Using existing location from search:', location);
+                    } else {
+                        location = await this.getUserLocation();
+                        this.currentLocation = location;
+                        
+                        // Update location info only if we got it from getUserLocation
+                        const locationText = location.default
+                            ? `Using default location: ${location.name}`
+                            : location.name
+                                ? `Location: ${location.name}`
+                                : `Location: ${location.latitude.toFixed(4)}°, ${location.longitude.toFixed(4)}°`;
+                        this.getElement('locationText').textContent = locationText;
+                    }
+
+                    const currentDate = new Date();
+                    const prayerData = {
+                        fajr: [], sunrise: [], dhuhr: [], asr: [], maghrib: [], isha: []
+                    };
+
+                    const selectedYears = parseInt(this.getElement('yearsSelect').value) || 1;
+                    const totalMonths = selectedYears * 12;
+                    let currentStep = 0;
+
+                    // Fetch data for selected years
+                    for (let yearOffset = selectedYears - 1; yearOffset >= 0; yearOffset--) {
+                        const year = currentDate.getFullYear() - yearOffset;
+
+                        for (let month = 1; month <= 12; month++) {
+                            currentStep++;
+                            this.updateLoadingProgress(currentStep, totalMonths, year, month);
+
+                            try {
+                                const monthData = await this.fetchPrayerTimes(
+                                    location.latitude,
+                                    location.longitude,
+                                    year,
+                                    month
+                                );
+
+                                if (monthData?.length) {
+                                    this.processMonthData(monthData, prayerData);
+                                }
+
+                                // Rate limiting
+                                await new Promise(resolve => setTimeout(resolve, 50));
+                            } catch (error) {
+                                console.error(`Error fetching data for ${year}-${month}:`, error);
+                            }
+                        }
+                    }
+
+                    this.updateLoadingProgress(totalMonths, totalMonths, 'Chart', 'Creation');
+
+                    const datasets = this.createDatasets(prayerData);
+                    this.allData = prayerData;
+                    this.createChart(datasets);
+
+                } catch (error) {
+                    this.showError(error);
+                }
+            }
+
+            processMonthData(monthData, prayerData) {
+                monthData.forEach(day => {
+                    const date = new Date(day.date.gregorian.date.split('-').reverse().join('-'));
+                    const timings = day.timings;
+
+                    Object.keys(prayerData).forEach(prayer => {
+                        const capitalizedPrayer = prayer.charAt(0).toUpperCase() + prayer.slice(1);
+                        const timeStr = timings[capitalizedPrayer]?.split(' ')[0];
+                        if (timeStr) {
+                            prayerData[prayer].push({
+                                x: date,
+                                y: this.timeToDecimal(timeStr)
+                            });
+                        }
+                    });
+                });
+            }
+
+            showError(error) {
+                console.error('Loading error:', error);
+                this.getElement('loading').innerHTML = `
+                    <div class="error">
+                        <div>Error loading prayer times</div>
+                        <small>${error.message}</small>
+                        <br><br>
+                        <button class="btn" onclick="app.loadAllPrayerTimes()" style="margin-top: 10px;">Try Again</button>
+                    </div>`;
+            }
+
+            // Event Handlers
+            async toggleDST() {
+                this.regenerateChartFromCache();
+            }
+
+            changeYears() {
+                this.rawPrayerData = {};
+                this.allData = {};
+                this.loadAllPrayerTimes();
+            }
+
+            async searchAndChangeLocation(cityName) {
+                try {
+                    console.log('Searching for city:', cityName);
+                    const searchBtn = this.getElement('searchBtn');
+                    searchBtn.disabled = true;
+                    searchBtn.textContent = 'Searching...';
+
+                    const geocodeResult = await this.geocodeCity(cityName);
+                    
+                    if (geocodeResult) {
+                        const location = {
+                            latitude: geocodeResult.lat,
+                            longitude: geocodeResult.lon,
+                            name: geocodeResult.display_name
+                        };
+                        
+                        console.log('New location found:', location);
+                        this.currentLocation = location;
+
+                        // Update location display
+                        const locationText = `Location: ${location.name}`;
+                        this.getElement('locationText').textContent = locationText;
+
+                        // Clear cache and reload with new location
+                        this.rawPrayerData = {};
+                        this.allData = {};
+                        this.loadAllPrayerTimes();
+                        
+                        // Clear search input
+                        this.getElement('locationSearch').value = '';
+                    } else {
+                        alert(`Could not find location "${cityName}". Please try a different city name.`);
+                    }
+                } catch (error) {
+                    console.error('Search error:', error);
+                    alert(`Error searching for "${cityName}". Please try again.`);
+                } finally {
+                    const searchBtn = this.getElement('searchBtn');
+                    searchBtn.disabled = false;
+                    searchBtn.textContent = 'Search';
+                }
+            }
+
+            async regenerateChartFromCache() {
+                if (Object.keys(this.rawPrayerData).length === 0) {
+                    this.loadAllPrayerTimes();
+                    return;
+                }
+
+                try {
+                    const chart = this.getElement('prayerChart');
+                    chart.style.opacity = '0.5';
+
+                    const currentDate = new Date();
+                    const prayerData = {
+                        fajr: [], sunrise: [], dhuhr: [], asr: [], maghrib: [], isha: []
+                    };
+
+                    const selectedYears = parseInt(this.getElement('yearsSelect').value) || 1;
+
+                    for (let yearOffset = selectedYears - 1; yearOffset >= 0; yearOffset--) {
+                        const year = currentDate.getFullYear() - yearOffset;
+
+                        for (let month = 1; month <= 12; month++) {
+                            const cacheKey = `${this.currentLocation.latitude}-${this.currentLocation.longitude}-${year}-${month}`;
+
+                            if (this.rawPrayerData[cacheKey]) {
+                                const monthData = this.processPrayerData(this.rawPrayerData[cacheKey]);
+                                if (monthData?.length) {
+                                    this.processMonthData(monthData, prayerData);
+                                }
+                            }
+                        }
+                    }
+
+                    const datasets = this.createDatasets(prayerData);
+                    this.allData = prayerData;
+                    this.createChart(datasets);
+
+                    chart.style.opacity = '1';
+                } catch (error) {
+                    console.error('Error regenerating chart:', error);
+                    this.loadAllPrayerTimes();
+                }
+            }
+        }
+
+        // Initialize Application
+        const app = new PrayerTimesApp();
+
+        // Global Event Handlers (for backward compatibility with HTML attributes)
+        function toggleDST() { app.toggleDST(); }
+        function changeYears() { app.changeYears(); }
+        
+        function searchLocation() {
+            const searchInput = document.getElementById('locationSearch');
+            const cityName = searchInput.value.trim();
+            
+            if (cityName) {
+                app.searchAndChangeLocation(cityName);
+            } else {
+                alert('Please enter a city name to search.');
+            }
+        }
+        
+        function handleLocationSearch(event) {
+            if (event.key === 'Enter') {
+                searchLocation();
+            }
+        }
+
+        // Load data when page loads
+        window.addEventListener('load', () => app.loadAllPrayerTimes());
+    </script>
+</body>
+</html>
