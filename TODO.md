@@ -262,34 +262,34 @@
 
 ## 🏷️ Version Release Strategy
 
-### v1.1 - Foundation (Next 2-4 weeks)
+### v1.1 - Foundation
 Community setup, contribution guidelines, basic CI/CD
 
-### v1.2 - Polish (1-2 months) 
+### v1.2 - Polish
 UI/UX improvements, accessibility, mobile optimization
 
-### v1.3 - Performance (2-3 months)
+### v1.3 - Performance
 PWA features, performance optimizations, offline support
 
-### v1.4 - Features (3-4 months)
+### v1.4 - Features
 Enhanced location services, data export, mapping
 
-### v1.5 - Visualization (4-6 months)
+### v1.5 - Visualization
 Multiple chart types, comparisons, advanced visuals
 
-### v2.0 - Islamic Integration (6-8 months)
+### v2.0 - Islamic Integration
 Religious features, Qibla, Hijri calendar, multilingual
 
-### v2.1 - Community (8-12 months)
+### v2.1 - Community
 User accounts, social features, community platform
 
-### v2.2 - Platforms (12-18 months)
+### v2.2 - Platforms
 Desktop apps, mobile apps, wearable integration
 
-### v2.3 - Education (18-24 months)
+### v2.3 - Education
 Educational tools, research features, global studies
 
-### v3.0 - Enterprise (2+ years)
+### v3.0 - Enterprise
 Advanced architecture, AI features, enterprise solutions
 
 ---
@@ -317,10 +317,10 @@ Advanced architecture, AI features, enterprise solutions
 
 ---
 
-**Last Updated:** September 1, 2025  
 **Total Features Planned:** 150+  
 **Contributors Welcome:** Yes! See CONTRIBUTING.md  
-**Maintainer:** [@melans](https://github.com/melans)
+**Maintainer:** [@melans](https://github.com/melans)  
+**Development:** Community-driven, no fixed timelines
 
 ---
 
