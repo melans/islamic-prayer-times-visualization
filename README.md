@@ -52,8 +52,8 @@ No download required - just open and start exploring prayer times worldwide!
 ### 💻 **Option 3: Local Development**
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/prayer-times-visualization.git
-cd prayer-times-visualization
+git clone https://github.com/melans/islamic-prayer-times-visualization.git
+cd islamic-prayer-times-visualization
 
 # Open in browser (no build process required)
 open prayer-times-graph.html
