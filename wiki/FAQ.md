@@ -113,7 +113,7 @@ Absolutely! You can:
 
 ### How can I support this project?
 - ⭐ Star the GitHub repository
-- ☕ [Buy me a coffee via PayPal](https://www.paypal.com/paypalme/anssary)
+- ☕ [Buy me a coffee via PayPal](https://paypal.me/MElansary)
 - 🔄 Share with your community
 - 🐛 Report bugs and suggest features
 - 💻 Contribute code improvements

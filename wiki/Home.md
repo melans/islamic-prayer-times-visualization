@@ -49,7 +49,7 @@ Welcome to the **Islamic Prayer Times Visualization** wiki! This tool provides b
 If you find this tool useful, please consider supporting its development:
 
 ### ☕ Buy Me a Coffee
-**[PayPal Donation](https://www.paypal.com/paypalme/anssary)** - Support via PayPal
+**[PayPal Donation](https://paypal.me/MElansary)** - Support via PayPal
 
 ### 🌟 Other Ways to Support
 - ⭐ Star the repository on GitHub
